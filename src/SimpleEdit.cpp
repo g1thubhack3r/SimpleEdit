@@ -13,7 +13,6 @@ void bhelp()
 	cout << "h: Show (H)elp" << endl;
 	cout << "?: Show help" << endl;
 }
-
 void fhelp()
 {
 	cout << "File mode help:" << endl;
@@ -28,41 +27,31 @@ void fhelp()
 	cout << "h: Show (H)elp" << endl;
 	cout << "?: Show help" << endl;
 }
-
 void fw()
 {
 	string line;
 	cout << "Line:";
 	getline(cin, line);
 	getline(cin, line);
-	stringstream tmpendl;
-	tmpendl << endl;
-	string newendl = tmpendl.str();
 	buffer += line;
-	buffer += newendl;
+	#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+	buffer += "\r\n";
+	#elif __APPLE__
+	buffer += "\r";
+	#elif __linux__ || __unix__ || defined(_POSIX_VERSION)
+	buffer += "\n";
+	#else
+	#error "Unknown platform, SimpleEdit supports Windows, Apple's OS, Linux, Unix and POSIX."
+	#endif
 }
-
 void fr()
 {
-	string tmp = buffer;
-	int find1, find2;
-	stringstream tmpendl;
-	tmpendl << endl;
-	string newendl = tmpendl.str();
-	do
-	{
-		find1 = tmp.find(newendl.c_str());
-		find2 = tmp.rfind(newendl.c_str());
-		cout << tmp;
-		tmp.erase(tmp.begin(), (string::iterator)(&tmp[find1]));
-	}while (find1 != find2);
+	cout << buffer << endl;
 }
-
 void ft(fstream &file)
 {
 	cout << "Cursor at position " << file.tellg() << endl;
 }
-
 void fs(fstream &file)
 {
 	cout << "Position:";
@@ -70,27 +59,31 @@ void fs(fstream &file)
 	cin >> pos;
 	file.seekg(pos, ios::beg);
 }
-
 void ff(fstream &file, string filename)
 {
 	int tmppos = file.tellg();
 	file.close();
 	file.open(filename, ios::in | ios::out);
-	file.seekg(tmppos, ios::beg);
 	string tmp = buffer;
 	int find1, find2;
-	stringstream tmpendl;
-	tmpendl << endl;
-	string newendl = tmpendl.str();
 	do
 	{
-		find1 = tmp.find(newendl.c_str());
-		find2 = tmp.rfind(newendl.c_str());
+		#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+		find1 = tmp.find("\r\n");
+		find2 = tmp.rfind("\r\n");
+		#elif __APPLE__
+		find1 = tmp.find("\r");
+		find2 = tmp.rfind("\r");
+		#elif __linux__ || __unix__ || defined(_POSIX_VERSION)
+		find1 = tmp.find("\n");
+		find2 = tmp.rfind("\n");
+		#else
+		#error "Unknown platform, SimpleEdit supports Windows, Apple's OS, Linux, Unix and POSIX."
+		#endif
 		file << tmp;
 		tmp.erase(tmp.begin(), (string::iterator)(&tmp[find1]));
 	}while (find1 != find2);
-}
-		                                                              
+}                                                              
 void fd(fstream &file, string filename)
 {	
 	cout << "Character number:";
@@ -116,20 +109,17 @@ void fd(fstream &file, string filename)
 	for (int i = 1; i <= cnum; i++) buffer.erase(buffer.end() - 1);
 	ff(file, filename);
 }
-
 void fmode()
 {
-	
 	string filename;
 	cout << "Enter filename:";
 	cin >> filename;
 	fstream file(filename, ios::in | ios::out | ios::app);
-	file.seekg(0, ios::beg);
-	while (!file)
+	while (!file.eof())
 	{
-		string temp;
-		file >> temp;
-		buffer += temp;
+		string tmp;
+		file >> tmp;
+		buffer += tmp;
 	}
 	while (true)
 	{
@@ -181,10 +171,7 @@ void fmode()
 				cout << "Unknown command, h for help" << endl;
 		} 
 	}
-	
-	
 }
-
 int main()
 {
 	cout << "Simple Editor" << endl;
